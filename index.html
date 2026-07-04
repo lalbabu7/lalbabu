@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lal Babu Cover Maker — Custom Covers for Every Surface, Every Season</title>
+<meta name="description" content="Made-to-measure covers for sofas, cars, luggage, appliances and more. Cut, stitched and fitted at Grant Road East, Mumbai.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Sora:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500&family=Tiro+Devanagari+Hindi&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#131A2C;
+  --ink-deep:#0B0F1D;
+  --ink-soft:#1B2440;
+  --chalk:#F4EFE4;
+  --chalk-dim:rgba(244,239,228,.62);
+  --lal:#E03A2F;
+  --lal-deep:#A92419;
+  --tape:#F2C53D;
+  --canvas:#EAE3D6;
+  --canvas-deep:#DFD6C2;
+  --line:rgba(244,239,228,.14);
+  --line-dark:rgba(19,26,44,.16);
+  --font-display:'Anton',sans-serif;
+  --font-body:'Sora',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+  --font-dev:'Tiro Devanagari Hindi',serif;
+  --pad:clamp(1.25rem,4vw,4.5rem);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{overscroll-behavior-y:none}
+body{
+  background:var(--ink);
+  color:var(--chalk);
+  font-family:var(--font-body);
+  font-weight:300;
+  font-size:clamp(.95rem,.85rem + .3vw,1.05rem);
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--lal);color:var(--chalk)}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font:inherit;border:0;background:none;cursor:pointer;color:inherit}
+
+/* ---------- texture: woven canvas ---------- */
+.weave{position:relative}
+.weave::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.45;
+  background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.022) 0 1px,transparent 1px 3px),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.022) 0 1px,transparent 1px 3px);
+}
+.weave--dark::before{opacity:.5}
+.weave--light::before{
+  background:
+    repeating-linear-gradient(0deg,rgba(19,26,44,.035) 0 1px,transparent 1px 3px),
+    repeating-linear-gradient(90deg,rgba(19,26,44,.035) 0 1px,transparent 1px 3px);
+}
+
+/* ---------- stitch dividers ---------- */
+.stitch{
+  height:2px;border:0;
+  background-image:linear-gradient(90deg,var(--lal) 0 9px,transparent 9px 16px);
+  background-size:16px 2px;background-repeat:repeat-x;
+  opacity:.85;
+}
+.stitch--chalk{background-image:linear-gradient(90deg,var(--chalk-dim) 0 9px,transparent 9px 16px)}
+
+/* ---------- cursor ---------- */
+.cursor-dot,.cursor-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:9999;border-radius:50%;transform:translate(-50%,-50%);}
+.cursor-dot{width:7px;height:7px;background:var(--lal)}
+.cursor-ring{
+  width:34px;height:34px;border:1.5px solid rgba(224,58,47,.7);
+  transition:width .28s ease,height .28s ease,background .28s ease,border-color .28s ease;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-size:.55rem;letter-spacing:.08em;color:var(--ink);
+}
+.cursor-ring span{opacity:0;transition:opacity .2s}
+body.cursor-grow .cursor-ring{width:64px;height:64px;background:var(--tape);border-color:var(--tape)}
+body.cursor-grow .cursor-ring span{opacity:1}
+@media (hover:none),(pointer:coarse){.cursor-dot,.cursor-ring{display:none}}
+
+/* ---------- measuring tape progress ---------- */
+.tape-progress{
+  position:fixed;top:0;left:0;height:14px;width:0;z-index:1200;
+  background:
+    repeating-linear-gradient(90deg,transparent 0 11px,rgba(19,26,44,.85) 11px 12.5px),
+    repeating-linear-gradient(90deg,transparent 0 59px,rgba(19,26,44,.9) 59px 61px),
+    var(--tape);
+  background-size:12.5px 7px,61px 14px,auto;
+  background-repeat:repeat-x;
+  background-position:0 0,0 0,0 0;
+  box-shadow:0 1px 0 rgba(0,0,0,.35);
+}
+.tape-progress::after{
+  content:"";position:absolute;right:-1px;top:0;height:100%;width:3px;background:var(--lal);
+}
+.tape-readout{
+  position:fixed;left:1rem;bottom:1rem;z-index:1200;
+  font-family:var(--font-mono);font-size:.62rem;letter-spacing:.14em;
+  color:var(--ink);background:var(--tape);padding:.45em .8em;
+  box-shadow:3px 3px 0 var(--ink-deep);
+  user-select:none;
+}
+@media(max-width:720px){.tape-readout{display:none}}
+
+/* ---------- preloader ---------- */
+.preloader{
+  position:fixed;inset:0;z-index:3000;background:var(--ink-deep);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.4rem;
+}
+.preloader__word{
+  font-family:var(--font-display);font-size:clamp(2rem,6vw,4rem);letter-spacing:.04em;
+  color:var(--chalk);display:flex;gap:.08em;
+}
+.preloader__word .lal{color:var(--lal)}
+.preloader__line{width:min(320px,60vw);height:2px;position:relative;overflow:hidden;background:rgba(244,239,228,.12)}
+.preloader__line i{
+  position:absolute;inset:0;display:block;transform:scaleX(0);transform-origin:left;
+  background-image:linear-gradient(90deg,var(--lal) 0 8px,transparent 8px 14px);
+  background-size:14px 2px;
+}
+.preloader__count{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.22em;color:var(--chalk-dim)}
+
+/* ---------- nav ---------- */
+.nav{
+  position:fixed;top:14px;left:0;right:0;z-index:1100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.9rem var(--pad);
+  transition:background .4s ease,box-shadow .4s ease;
+}
+.nav.scrolled{background:rgba(11,15,29,.86);backdrop-filter:blur(12px);box-shadow:0 1px 0 var(--line)}
+.nav__logo{display:flex;flex-direction:column;line-height:1}
+.nav__logo b{font-family:var(--font-display);font-weight:400;font-size:1.25rem;letter-spacing:.05em}
+.nav__logo b em{font-style:normal;color:var(--lal)}
+.nav__logo span{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.3em;color:var(--chalk-dim);margin-top:.3em;text-transform:uppercase}
+.nav__links{display:flex;gap:2.2rem;font-family:var(--font-mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase}
+.nav__links a{position:relative;padding:.3em 0}
+.nav__links a::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
+  background-image:linear-gradient(90deg,var(--lal) 0 6px,transparent 6px 11px);
+  background-size:11px 2px;background-repeat:repeat-x;
+  transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.6,0,.2,1);
+}
+.nav__links a:hover::after{transform:scaleX(1)}
+.nav__call{
+  font-family:var(--font-mono);font-size:.66rem;letter-spacing:.16em;
+  border:1px solid var(--lal);color:var(--chalk);padding:.65em 1.2em;
+  transition:background .3s,color .3s;
+}
+.nav__call:hover{background:var(--lal)}
+@media(max-width:880px){.nav__links{display:none}}
+
+/* ---------- hero ---------- */
+.hero{
+  min-height:100svh;position:relative;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:0 var(--pad) clamp(2rem,6vh,4rem);overflow:hidden;background:var(--ink-deep);
+}
+#cloth{position:absolute;inset:0;width:100%;height:100%}
+.hero::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(11,15,29,.55) 0%,rgba(11,15,29,.05) 38%,rgba(11,15,29,.25) 68%,rgba(11,15,29,.88) 100%);
+}
+.hero__inner{position:relative;z-index:2}
+.hero__eyebrow{
+  font-family:var(--font-mono);font-size:clamp(.58rem,.5rem + .25vw,.72rem);
+  letter-spacing:.26em;text-transform:uppercase;color:var(--tape);
+  display:flex;align-items:center;gap:1em;margin-bottom:clamp(1rem,2.5vh,1.8rem);
+}
+.hero__eyebrow::before{content:"";width:42px;height:2px;background-image:linear-gradient(90deg,var(--tape) 0 7px,transparent 7px 12px);background-size:12px 2px}
+.hero__title{
+  font-family:var(--font-display);font-weight:400;
+  font-size:clamp(3rem,10.5vw,9.2rem);
+  line-height:.96;letter-spacing:.012em;text-transform:uppercase;
+}
+.hero__title .line{display:block;overflow:hidden}
+.hero__title .line>span{display:inline-block;will-change:transform}
+.hero__title .red{color:var(--lal);position:relative;display:inline-block}
+.hero__title .red svg{
+  position:absolute;left:0;right:0;bottom:-.06em;width:100%;height:.14em;overflow:visible;
+}
+.hero__title .red svg path{stroke:var(--tape);stroke-width:3;fill:none;stroke-dasharray:10 8}
+.hero__bottom{
+  position:relative;z-index:2;display:flex;align-items:flex-end;justify-content:space-between;
+  gap:2rem;margin-top:clamp(1.6rem,4vh,3rem);flex-wrap:wrap;
+}
+.hero__sub{max-width:34ch;color:var(--chalk-dim);font-size:clamp(.92rem,.85rem+.25vw,1.05rem)}
+.hero__sub strong{color:var(--chalk);font-weight:600}
+.hero__ctas{display:flex;gap:1rem;flex-wrap:wrap}
+.btn{
+  position:relative;display:inline-flex;align-items:center;gap:.7em;
+  font-family:var(--font-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+  padding:1.05em 1.7em;border:1px solid transparent;overflow:hidden;
+  transition:color .35s;
+  will-change:transform;
+}
+.btn i{font-style:normal;transition:transform .35s}
+.btn--lal{background:var(--lal);color:var(--chalk)}
+.btn--lal::before{content:"";position:absolute;inset:0;background:var(--lal-deep);transform:scaleY(0);transform-origin:bottom;transition:transform .4s cubic-bezier(.6,0,.2,1)}
+.btn--lal:hover::before{transform:scaleY(1)}
+.btn--lal:hover i{transform:translateX(4px)}
+.btn--ghost{border-color:rgba(244,239,228,.35);color:var(--chalk)}
+.btn--ghost:hover{border-color:var(--tape);color:var(--tape)}
+.btn>span,.btn>i{position:relative;z-index:1}
+.hero__scroll{
+  position:absolute;right:var(--pad);bottom:clamp(2rem,6vh,4rem);z-index:2;
+  font-family:var(--font-mono);font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--chalk-dim);writing-mode:vertical-rl;display:flex;align-items:center;gap:.9em;
+}
+.hero__scroll::after{content:"";width:2px;height:54px;background-image:linear-gradient(180deg,var(--chalk-dim) 0 6px,transparent 6px 11px);background-size:2px 11px;animation:drip 1.8s linear infinite}
+@keyframes drip{to{background-position:0 22px}}
+@media(max-width:880px){.hero__scroll{display:none}}
+
+/* ---------- tape marquee ---------- */
+.marquee{
+  background:var(--tape);color:var(--ink-deep);overflow:hidden;white-space:nowrap;
+  border-top:3px solid var(--ink-deep);border-bottom:3px solid var(--ink-deep);
+  position:relative;z-index:3;
+}
+.marquee__track{display:inline-flex;will-change:transform}
+.marquee__chunk{display:inline-flex;align-items:center;padding:.85rem 0}
+.marquee__chunk span{
+  font-family:var(--font-display);font-size:clamp(1rem,2.2vw,1.5rem);letter-spacing:.06em;
+  text-transform:uppercase;padding:0 1.4rem;
+}
+.marquee__chunk i{
+  font-style:normal;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.1em;
+  display:inline-flex;flex-direction:column;align-items:center;gap:2px;
+}
+.marquee__chunk i::before{content:"";width:2px;height:12px;background:var(--ink-deep)}
+
+/* ---------- section scaffolding ---------- */
+section{position:relative}
+section[id]{scroll-margin-top:96px}
+.section-pad{padding:clamp(4.5rem,11vh,8.5rem) var(--pad)}
+.eyebrow{
+  font-family:var(--font-mono);font-size:.64rem;letter-spacing:.28em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:.9em;margin-bottom:1.4rem;
+}
+.eyebrow::before{content:"";width:34px;height:2px;background:currentColor;opacity:.6}
+.h2{
+  font-family:var(--font-display);font-weight:400;text-transform:uppercase;
+  font-size:clamp(2.1rem,5.4vw,4.4rem);line-height:1.02;letter-spacing:.012em;
+}
+[data-reveal]{will-change:transform,opacity}
+
+/* ---------- fitting room (light canvas) ---------- */
+.fit{background:var(--canvas);color:var(--ink);overflow:hidden}
+.fit__grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(2rem,5vw,5rem);align-items:center}
+.fit .eyebrow{color:var(--lal)}
+.fit h2{margin-bottom:1.2rem}
+.fit h2 em{font-style:normal;color:var(--lal)}
+.fit__copy{color:rgba(19,26,44,.75);max-width:44ch;margin-bottom:1.6rem}
+.fit__copy strong{font-weight:600;color:var(--ink)}
+.fit__tabs{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.5rem}
+.fit__tab{
+  font-family:var(--font-mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;
+  padding:.75em 1.15em;border:1px solid rgba(19,26,44,.3);color:var(--ink);
+  position:relative;transition:background .3s,color .3s,border-color .3s,transform .3s;
+}
+.fit__tab:hover{border-color:var(--lal);color:var(--lal);transform:translateY(-2px)}
+.fit__tab.active{background:var(--ink);color:var(--chalk);border-color:var(--ink);transform:none}
+.fit__tab.active::after{
+  content:"";position:absolute;left:.6em;right:.6em;bottom:.35em;height:2px;
+  background-image:linear-gradient(90deg,var(--tape) 0 6px,transparent 6px 10px);background-size:10px 2px;
+}
+/* step rail */
+.fit__steps{display:flex;align-items:center;gap:.5rem;margin-bottom:1.4rem;flex-wrap:wrap}
+.fit__step{
+  font-family:var(--font-mono);font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(19,26,44,.4);display:inline-flex;align-items:center;gap:.5em;
+  transition:color .3s;white-space:nowrap;
+}
+.fit__step::before{
+  content:attr(data-n);width:1.9em;height:1.9em;border-radius:50%;
+  border:1.5px solid rgba(19,26,44,.3);display:inline-flex;align-items:center;justify-content:center;
+  transition:background .3s,border-color .3s,color .3s;font-size:.9em;
+}
+.fit__step.on{color:var(--ink)}
+.fit__step.on::before{background:var(--lal);border-color:var(--lal);color:var(--chalk)}
+.fit__step + .fit__step{margin-left:.2rem}
+.fit__steps i{flex:1 0 12px;height:2px;min-width:12px;
+  background-image:linear-gradient(90deg,rgba(19,26,44,.35) 0 5px,transparent 5px 9px);background-size:9px 2px;background-repeat:repeat-x;background-position:center}
+/* tape meter */
+.fit__meter{
+  position:relative;height:34px;margin-bottom:1.5rem;max-width:340px;
+  border:1px solid rgba(19,26,44,.4);background:var(--chalk);overflow:hidden;
+}
+.fit__meter i{
+  position:absolute;inset:0;width:12%;
+  background:
+    repeating-linear-gradient(90deg,transparent 0 9px,rgba(19,26,44,.85) 9px 10.5px),
+    repeating-linear-gradient(90deg,transparent 0 44px,rgba(19,26,44,.9) 44px 46px),
+    var(--tape);
+  box-shadow:1px 0 0 var(--lal);
+}
+.fit__meter b{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;
+  padding:0 .9em;font-family:var(--font-mono);font-weight:500;font-size:.64rem;
+  letter-spacing:.18em;color:var(--ink);mix-blend-mode:multiply;
+}
+.fit__actions{display:flex;align-items:center;gap:1.6rem;flex-wrap:wrap}
+.fit__auto{
+  font-family:var(--font-mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;
+  border:1px solid rgba(19,26,44,.35);padding:.8em 1.3em;color:var(--ink);
+  transition:background .3s,color .3s,border-color .3s;
+}
+.fit__auto:hover{background:var(--lal);border-color:var(--lal);color:var(--chalk)}
+.fit .cover-card__order{color:var(--lal);border-color:var(--lal)}
+.fit .cover-card__order:hover{color:var(--ink);border-color:var(--ink)}
+/* stage */
+.fit__tilt{perspective:1300px}
+.fit__stage{
+  position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--ink-soft);
+  box-shadow:14px 16px 0 rgba(19,26,44,.14);border:1px solid rgba(19,26,44,.25);
+  touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;
+  transform-style:preserve-3d;will-change:transform;
+}
+.fit__stage:active{cursor:grabbing}
+.fit__stage>img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 42%;
+  pointer-events:none;will-change:transform;
+}
+/* measure overlay */
+.fit__measure{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0}
+.fit__corner{position:absolute;width:24px;height:24px;border:3px solid var(--tape);filter:drop-shadow(0 1px 3px rgba(11,15,29,.6))}
+.fit__corner--tl{top:4%;left:4%;border-right:0;border-bottom:0}
+.fit__corner--tr{top:4%;right:4%;border-left:0;border-bottom:0}
+.fit__corner--bl{bottom:4%;left:4%;border-right:0;border-top:0}
+.fit__corner--br{bottom:4%;right:4%;border-left:0;border-top:0}
+.fit__dim{position:absolute;background-image:linear-gradient(90deg,var(--tape) 0 7px,transparent 7px 12px);background-size:12px 2px;filter:drop-shadow(0 1px 2px rgba(11,15,29,.7))}
+.fit__dim--w{top:9%;left:10%;right:10%;height:2px;transform-origin:left}
+.fit__dim--h{left:8%;top:16%;bottom:12%;width:2px;background-image:linear-gradient(180deg,var(--tape) 0 7px,transparent 7px 12px);background-size:2px 12px;transform-origin:top}
+.fit__dim span{
+  position:absolute;font-family:var(--font-mono);font-size:.56rem;letter-spacing:.14em;
+  background:var(--tape);color:var(--ink);padding:.35em .6em;white-space:nowrap;
+  box-shadow:2px 2px 0 rgba(11,15,29,.8);
+}
+.fit__dim--w span{left:50%;top:-.4rem;transform:translate(-50%,-100%)}
+.fit__dim--h span{left:.5rem;top:50%;transform:translateY(-50%)}
+/* chalk outline */
+.fit__chalk{position:absolute;inset:0;z-index:2;width:100%;height:100%;pointer-events:none;opacity:0}
+.fit__chalk rect{
+  fill:none;stroke:rgba(244,239,228,.9);stroke-width:2.5;vector-effect:non-scaling-stroke;
+  stroke-dasharray:100;stroke-dashoffset:100;
+  filter:drop-shadow(0 0 3px rgba(244,239,228,.35));
+}
+/* pvc sheet */
+.fit__sheet{
+  position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:
+    repeating-linear-gradient(180deg,rgba(255,255,255,.12) 0 1.5px,rgba(255,255,255,0) 1.5px 32px),
+    linear-gradient(105deg,rgba(255,255,255,.34) 0%,rgba(255,255,255,.08) 28%,rgba(255,255,255,.38) 52%,rgba(255,255,255,.1) 74%,rgba(255,255,255,.32) 100%);
+  backdrop-filter:blur(1.1px) brightness(1.07) saturate(.9);
+  -webkit-backdrop-filter:blur(1.1px) brightness(1.07) saturate(.9);
+}
+.fit__hemsvg{position:absolute;inset:0;z-index:4;width:100%;height:100%;pointer-events:none;overflow:visible}
+.fit__hemsvg .hem-back{fill:none;stroke:var(--chalk);stroke-width:7;opacity:.95}
+.fit__hemsvg .hem-stitch{fill:none;stroke:var(--lal);stroke-width:2.5;stroke-dasharray:9 7}
+.fit__handle{
+  position:absolute;right:clamp(.8rem,3vw,1.6rem);top:0;transform:translateY(-50%);
+  font-family:var(--font-mono);font-size:.58rem;letter-spacing:.16em;
+  background:var(--tape);color:var(--ink);padding:.65em .95em;white-space:nowrap;
+  box-shadow:3px 3px 0 rgba(19,26,44,.85);cursor:grab;z-index:5;
+}
+.fit__stage.done .fit__handle{opacity:0;transition:opacity .3s}
+.fit__stamp{
+  position:absolute;left:50%;top:50%;z-index:6;pointer-events:none;
+  transform:translate(-50%,-50%) rotate(-9deg) scale(0);
+  font-family:var(--font-display);font-size:clamp(1.4rem,3.4vw,2.4rem);letter-spacing:.06em;
+  color:var(--lal);border:4px solid var(--lal);padding:.25em .7em;text-transform:uppercase;
+  background:rgba(244,239,228,.88);
+}
+.fit__stamp small{
+  display:block;font-family:var(--font-mono);font-size:.5rem;letter-spacing:.3em;
+  color:var(--ink);margin-top:.3em;
+}
+.fit__burst{position:absolute;inset:0;z-index:7;pointer-events:none}
+.fit__bit{position:absolute;left:50%;top:50%;width:11px;height:4px}
+.fit__wipe{
+  position:absolute;inset:0;z-index:8;background:var(--tape);transform:scaleX(0);
+  background-image:linear-gradient(90deg,transparent 0 10px,rgba(19,26,44,.25) 10px 12px);background-size:12px 100%;
+}
+.fit__hint{
+  position:absolute;left:clamp(.8rem,3vw,1.6rem);bottom:.9rem;z-index:5;
+  font-family:var(--font-mono);font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(244,239,228,.85);text-shadow:0 1px 4px rgba(11,15,29,.8);
+}
+.fit__stage.done .fit__hint{opacity:0;transition:opacity .3s}
+.fit__plate{
+  margin-top:1rem;text-align:right;
+  font-family:var(--font-mono);font-size:.56rem;letter-spacing:.26em;color:rgba(19,26,44,.45);
+}
+@media(max-width:880px){.fit__grid{grid-template-columns:1fr}.fit__tilt{perspective:none}}
+
+/* ---------- covers grid ---------- */
+.covers{background:var(--ink)}
+.covers__head{display:flex;align-items:flex-end;justify-content:space-between;gap:2rem;margin-bottom:clamp(2.5rem,6vh,4rem);flex-wrap:wrap}
+.covers__head p{max-width:40ch;color:var(--chalk-dim)}
+.covers__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line)}
+.cover-card{
+  background:var(--ink);padding:clamp(1.6rem,3vw,2.4rem);min-height:300px;
+  display:flex;flex-direction:column;justify-content:space-between;gap:2rem;
+  position:relative;overflow:hidden;cursor:pointer;
+}
+.cover-card::before{
+  content:"";position:absolute;inset:10px;border:2px dashed transparent;pointer-events:none;
+  transition:border-color .4s ease;
+}
+.cover-card:hover::before{border-color:rgba(242,197,61,.55)}
+.cover-card::after{
+  content:"";position:absolute;inset:0;background:var(--ink-soft);
+  transform:translateY(101%);transition:transform .5s cubic-bezier(.6,0,.2,1);z-index:0;
+}
+.cover-card:hover::after{transform:translateY(0)}
+.cover-card>*{position:relative;z-index:1}
+.cover-card__top{display:flex;justify-content:space-between;align-items:flex-start}
+.cover-card__num{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.2em;color:var(--chalk-dim)}
+.cover-card__icon{width:54px;height:54px;color:var(--tape);transition:transform .45s cubic-bezier(.34,1.56,.64,1)}
+.cover-card:hover .cover-card__icon{transform:translateY(-6px) rotate(-4deg);color:var(--lal)}
+.cover-card__icon svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.cover-card h3{font-family:var(--font-display);font-weight:400;text-transform:uppercase;font-size:clamp(1.3rem,2.2vw,1.8rem);letter-spacing:.03em;margin-bottom:.5rem}
+.cover-card p{color:var(--chalk-dim);font-size:.88rem;max-width:30ch}
+.cover-card__spec{
+  margin-top:1.2rem;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--tape);opacity:0;transform:translateY(8px);
+  transition:opacity .4s .08s,transform .4s .08s;
+}
+.cover-card:hover .cover-card__spec{opacity:1;transform:none}
+@media(max-width:980px){.covers__grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.covers__grid{grid-template-columns:1fr}.cover-card{min-height:0}}
+.cover-card__img{
+  position:relative;margin:calc(-1 * clamp(1.6rem,3vw,2.4rem)) calc(-1 * clamp(1.6rem,3vw,2.4rem)) 0;
+  aspect-ratio:4/3;overflow:hidden;background:var(--ink-soft);
+}
+.cover-card__img img{
+  width:100%;height:100%;object-fit:cover;
+  filter:saturate(.92);transition:transform .6s cubic-bezier(.2,.6,.2,1),filter .6s;
+}
+.cover-card:hover .cover-card__img img{transform:scale(1.05);filter:saturate(1.05)}
+.cover-card__img::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(19,26,44,0) 55%,rgba(19,26,44,.55) 100%);
+}
+.cover-card__order{
+  align-self:flex-start;display:inline-flex;align-items:center;gap:.6em;
+  font-family:var(--font-mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--tape);border-bottom:1px dashed var(--tape);padding-bottom:.3em;
+  transition:color .3s,border-color .3s;
+}
+.cover-card__order:hover{color:var(--lal);border-color:var(--lal)}
+.cover-card__order i{font-style:normal;transition:transform .3s}
+.cover-card__order:hover i{transform:translateX(4px)}
+
+/* ---------- work gallery ---------- */
+.work{background:var(--ink-deep)}
+.work__head{display:flex;align-items:flex-end;justify-content:space-between;gap:2rem;margin-bottom:clamp(2.5rem,6vh,4rem);flex-wrap:wrap}
+.work__head p{max-width:42ch;color:var(--chalk-dim)}
+.work__grid{columns:4 240px;column-gap:1rem}
+.work__item{
+  position:relative;margin-bottom:1rem;overflow:hidden;cursor:pointer;
+  break-inside:avoid;background:var(--ink-soft);display:block;width:100%;
+}
+.work__item img{width:100%;filter:saturate(.9);transition:transform .55s cubic-bezier(.2,.6,.2,1),filter .55s}
+.work__item:hover img{transform:scale(1.045);filter:saturate(1.08)}
+.work__item::after{
+  content:"";position:absolute;inset:8px;border:2px dashed rgba(242,197,61,0);
+  pointer-events:none;transition:border-color .35s;
+}
+.work__item:hover::after{border-color:rgba(242,197,61,.65)}
+.work__item figcaption{
+  position:absolute;left:0;right:0;bottom:0;padding:.9rem 1rem .8rem;
+  font-family:var(--font-mono);font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--chalk);background:linear-gradient(180deg,rgba(11,15,29,0),rgba(11,15,29,.82));
+  opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s;
+}
+.work__item:hover figcaption{opacity:1;transform:none}
+
+/* ---------- lightbox ---------- */
+.lightbox{
+  position:fixed;inset:0;z-index:2000;background:rgba(11,15,29,.94);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;
+  opacity:0;pointer-events:none;transition:opacity .35s ease;padding:clamp(1rem,4vw,3rem);
+}
+.lightbox.open{opacity:1;pointer-events:auto}
+.lightbox img{
+  max-width:min(92vw,1000px);max-height:76vh;object-fit:contain;
+  box-shadow:0 20px 60px rgba(0,0,0,.55);border:1px solid var(--line);
+}
+.lightbox__cap{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--chalk-dim)}
+.lightbox__btn{
+  position:absolute;top:50%;transform:translateY(-50%);
+  font-family:var(--font-mono);font-size:1.6rem;color:var(--chalk);
+  width:52px;height:52px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+  transition:background .3s,border-color .3s;background:rgba(11,15,29,.5);
+}
+.lightbox__btn:hover{background:var(--lal);border-color:var(--lal)}
+.lightbox__prev{left:clamp(.5rem,2vw,1.5rem)}
+.lightbox__next{right:clamp(.5rem,2vw,1.5rem)}
+.lightbox__close{
+  position:absolute;top:clamp(.8rem,2vw,1.5rem);right:clamp(.8rem,2vw,1.5rem);
+  font-family:var(--font-mono);font-size:.66rem;letter-spacing:.2em;color:var(--chalk);
+  border:1px solid var(--line);padding:.7em 1.1em;transition:background .3s,border-color .3s;
+}
+.lightbox__close:hover{background:var(--lal);border-color:var(--lal)}
+@media(max-width:720px){.lightbox__btn{width:42px;height:42px}}
+
+/* ---------- order ---------- */
+.order{background:var(--canvas);color:var(--ink)}
+.order .eyebrow{color:var(--lal)}
+.order__grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(2.5rem,6vw,5.5rem);margin-top:clamp(2.5rem,6vh,4rem);align-items:start}
+.order__form{display:grid;gap:1.4rem}
+.order__row{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem}
+.field{display:flex;flex-direction:column;gap:.55em}
+.field label{
+  font-family:var(--font-mono);font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;
+  color:rgba(19,26,44,.65);
+}
+.field input,.field select,.field textarea{
+  font-family:var(--font-body);font-weight:400;font-size:.95rem;color:var(--ink);
+  background:rgba(255,255,255,.55);border:1px solid var(--line-dark);
+  padding:.85em 1em;outline:none;border-radius:0;appearance:none;-webkit-appearance:none;
+  transition:border-color .3s,background .3s;width:100%;
+}
+.field select{
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23E03A2F' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 1em center;padding-right:2.6em;cursor:pointer;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--lal);background:#fff}
+.field textarea{resize:vertical;min-height:90px}
+.order__ticket{
+  position:sticky;top:110px;background:var(--chalk);border:1px solid var(--line-dark);
+  padding:clamp(1.4rem,3vw,2.2rem);
+  box-shadow:8px 10px 0 rgba(19,26,44,.12);
+}
+.order__ticket::before{
+  content:"ORDER SLIP — Nº 13";display:block;
+  font-family:var(--font-mono);font-size:.58rem;letter-spacing:.26em;color:var(--lal);
+  margin-bottom:1.2rem;
+}
+.order__ticket dl{display:grid;gap:.95rem;margin-bottom:1.6rem}
+.order__ticket dt{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(19,26,44,.5)}
+.order__ticket dd{font-size:.93rem;line-height:1.5;border-bottom:1px dashed rgba(19,26,44,.25);padding:.15em 0 .4em}
+.order__ticket dd:empty::before{content:"—";color:rgba(19,26,44,.3)}
+.order__send{width:100%;justify-content:center}
+.order__alt{
+  margin-top:1rem;text-align:center;font-family:var(--font-mono);font-size:.62rem;
+  letter-spacing:.16em;text-transform:uppercase;color:rgba(19,26,44,.6);
+}
+.order__alt a{color:var(--lal);border-bottom:1px dashed var(--lal)}
+@media(max-width:880px){.order__grid{grid-template-columns:1fr}.order__row{grid-template-columns:1fr}.order__ticket{position:static}}
+
+/* ---------- process (pinned) ---------- */
+.process{background:var(--ink-deep)}
+.process__wrap{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(2rem,6vw,6rem)}
+.process__sticky{position:sticky;top:18vh;align-self:start;height:fit-content}
+.process__bignum{
+  font-family:var(--font-display);font-size:clamp(7rem,16vw,15rem);line-height:.85;color:transparent;
+  -webkit-text-stroke:2px rgba(244,239,228,.25);position:relative;
+}
+.process__bignum b{
+  position:absolute;inset:0;color:var(--lal);-webkit-text-stroke:0;font-weight:400;
+  clip-path:inset(100% 0 0 0);
+}
+.process__steps{position:relative;padding-left:clamp(2rem,4vw,3.4rem)}
+.process__thread{
+  position:absolute;left:8px;top:0;bottom:0;width:2px;
+}
+.process__thread svg{width:100%;height:100%;overflow:visible}
+.process__thread path{stroke:var(--lal);stroke-width:2.5;fill:none;stroke-dasharray:9 7}
+.p-step{padding:clamp(1.8rem,4vh,3rem) 0;border-bottom:1px solid var(--line);opacity:.28;transition:opacity .5s}
+.p-step.active{opacity:1}
+.p-step:last-child{border-bottom:0}
+.p-step__tag{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--tape);margin-bottom:.7rem;display:flex;align-items:center;gap:.8em}
+.p-step__tag::before{content:"";width:11px;height:11px;border-radius:50%;border:2px solid var(--lal);background:var(--ink-deep);margin-left:calc(-1 * clamp(2rem,4vw,3.4rem) - 4px + 8px)}
+.p-step h3{font-family:var(--font-display);font-weight:400;text-transform:uppercase;font-size:clamp(1.6rem,3.4vw,2.6rem);letter-spacing:.02em;margin-bottom:.6rem}
+.p-step p{color:var(--chalk-dim);max-width:46ch}
+.p-step p b{color:var(--chalk);font-weight:600}
+@media(max-width:880px){
+  .process__wrap{grid-template-columns:1fr}
+  .process__sticky{position:static}
+  .process__bignum{display:none}
+}
+
+/* ---------- materials ---------- */
+.materials{background:var(--canvas);color:var(--ink)}
+.materials .eyebrow{color:var(--lal)}
+.materials__row{display:flex;flex-wrap:wrap;gap:1rem;margin-top:2.6rem}
+.swatch{
+  flex:1 1 180px;min-height:150px;border:1px solid var(--line-dark);padding:1.2rem;
+  display:flex;flex-direction:column;justify-content:space-between;gap:1.6rem;
+  position:relative;overflow:hidden;background:var(--canvas);
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .35s;
+  cursor:pointer;
+}
+.swatch:hover{transform:translateY(-6px) rotate(-.6deg);box-shadow:8px 10px 0 rgba(19,26,44,.14)}
+.swatch__chip{width:100%;height:56px;position:relative}
+.swatch__chip::after{
+  content:"";position:absolute;inset:0;border:2px dashed rgba(19,26,44,.0);transition:border-color .3s;
+}
+.swatch:hover .swatch__chip::after{border-color:rgba(19,26,44,.35)}
+.swatch--canvas .swatch__chip{background:repeating-linear-gradient(45deg,#C9B98F 0 4px,#BFAE83 4px 8px)}
+.swatch--rexine .swatch__chip{background:linear-gradient(135deg,#3A2A23,#56392B);box-shadow:inset 0 6px 14px rgba(255,255,255,.08)}
+.swatch--pvc .swatch__chip{background:linear-gradient(120deg,#5E748F 0 50%,#6B82A0 50%);box-shadow:inset 0 -8px 16px rgba(255,255,255,.18)}
+.swatch--quilt .swatch__chip{background:#9DA8BD;background-image:repeating-linear-gradient(45deg,transparent 0 13px,rgba(19,26,44,.28) 13px 14.5px),repeating-linear-gradient(-45deg,transparent 0 13px,rgba(19,26,44,.28) 13px 14.5px)}
+.swatch--mesh .swatch__chip{background:#39424F;background-image:radial-gradient(rgba(234,227,214,.5) 1.2px,transparent 1.3px);background-size:7px 7px}
+.swatch h4{font-family:var(--font-mono);font-weight:500;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase}
+.swatch p{font-size:.78rem;color:rgba(19,26,44,.65);line-height:1.5}
+
+/* ---------- promise ---------- */
+.promise{background:var(--ink)}
+.promise__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.6rem,4vw,3.5rem);margin-top:3rem}
+.promise__item{border-top:2px solid var(--line);padding-top:1.4rem}
+.promise__item .stitch{margin:-1.5rem 0 1.3rem;background-image:linear-gradient(90deg,var(--tape) 0 9px,transparent 9px 16px)}
+.promise__item h3{font-family:var(--font-display);font-weight:400;text-transform:uppercase;font-size:1.35rem;letter-spacing:.03em;margin-bottom:.6rem}
+.promise__item p{color:var(--chalk-dim);font-size:.9rem;max-width:34ch}
+@media(max-width:760px){.promise__grid{grid-template-columns:1fr}}
+
+/* ---------- visit ---------- */
+.visit{background:var(--ink-deep);overflow:hidden}
+.visit__grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(2.5rem,6vw,6rem)}
+.visit .h2 em{font-style:normal;color:var(--tape)}
+.visit__phone{
+  display:inline-block;margin:2rem 0 1rem;font-family:var(--font-display);
+  font-size:clamp(2rem,5.4vw,4rem);letter-spacing:.04em;color:var(--chalk);
+  position:relative;
+}
+.visit__phone::after{
+  content:"";position:absolute;left:0;right:0;bottom:-6px;height:3px;
+  background-image:linear-gradient(90deg,var(--lal) 0 10px,transparent 10px 18px);
+  background-size:18px 3px;transform:scaleX(0);transform-origin:left;transition:transform .45s cubic-bezier(.6,0,.2,1);
+}
+.visit__phone:hover::after{transform:scaleX(1)}
+.visit__ctas{display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.6rem}
+.visit__card{
+  border:1px solid var(--line);padding:clamp(1.6rem,3vw,2.4rem);position:relative;background:var(--ink);
+}
+.visit__card::before{
+  content:"PATTERN Nº 13";position:absolute;top:-9px;left:18px;background:var(--ink-deep);
+  padding:0 .8em;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.24em;color:var(--tape);
+}
+.visit__card dl{display:grid;gap:1.3rem}
+.visit__card dt{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.24em;text-transform:uppercase;color:var(--chalk-dim);margin-bottom:.35em}
+.visit__card dd{font-size:.95rem;line-height:1.6}
+.visit__card dd a{border-bottom:1px dashed var(--lal);transition:color .3s}
+.visit__card dd a:hover{color:var(--tape)}
+.visit__hours{display:flex;align-items:center;gap:.6em}
+.visit__hours::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--tape);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(242,197,61,.5)}50%{box-shadow:0 0 0 7px rgba(242,197,61,0)}}
+@media(max-width:880px){.visit__grid{grid-template-columns:1fr}}
+
+/* ---------- footer ---------- */
+.footer{background:var(--ink-deep);border-top:1px solid var(--line)}
+.footer__big{
+  font-family:var(--font-display);text-transform:uppercase;font-weight:400;
+  font-size:clamp(3rem,13vw,11rem);line-height:.92;letter-spacing:.01em;
+  color:transparent;-webkit-text-stroke:1.5px rgba(244,239,228,.3);
+  text-align:center;padding:clamp(2.5rem,7vh,5rem) var(--pad) 0;
+  transition:color .6s ease;user-select:none;
+}
+.footer__big:hover{color:var(--lal);-webkit-text-stroke:1.5px var(--lal)}
+.footer__bar{
+  display:flex;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;
+  padding:2rem var(--pad) 2.4rem;
+  font-family:var(--font-mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--chalk-dim);
+}
+.footer__bar a:hover{color:var(--tape)}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important}
+}
+</style>
+</head>
+<body class="weave weave--dark">
+
+<!-- preloader -->
+<div class="preloader" id="preloader" aria-hidden="true">
+  <div class="preloader__word"><span class="lal">LAL</span><span>&nbsp;BABU</span></div>
+  <div class="preloader__line"><i id="preStitch"></i></div>
+  <div class="preloader__count"><span id="preCount">0</span> CM MEASURED</div>
+</div>
+
+<!-- cursor -->
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"><span id="cursorLabel">VIEW</span></div>
+
+<!-- tape progress -->
+<div class="tape-progress" id="tapeProgress" aria-hidden="true"></div>
+<div class="tape-readout" id="tapeReadout" aria-hidden="true">MEASURED 0.00 M</div>
+
+<!-- nav -->
+<header class="nav" id="nav">
+  <a class="nav__logo" href="#top" aria-label="Lal Babu Cover Maker — home">
+    <b><em>LAL</em> BABU</b>
+    <span>Cover Maker · Est. Grant Road</span>
+  </a>
+  <nav class="nav__links" aria-label="Main">
+    <a href="#covers">Covers</a>
+    <a href="#work">Our Work</a>
+    <a href="#process">Process</a>
+    <a href="#materials">Materials</a>
+    <a href="#order">Order</a>
+    <a href="#visit">Visit</a>
+  </nav>
+  <a class="nav__call" href="tel:+919819827871" data-magnetic>CALL 98198 27871</a>
+</header>
+
+<!-- hero -->
+<section class="hero" id="top">
+  <canvas id="cloth" aria-hidden="true"></canvas>
+  <div class="hero__inner">
+    <p class="hero__eyebrow" id="heroEyebrow">Lal Babu Cover Maker — Grant Road E, Mumbai 400004</p>
+    <h1 class="hero__title" id="heroTitle">
+      <span class="line"><span>Every surface.</span></span>
+      <span class="line"><span>Every season.</span></span>
+      <span class="line"><span class="red">Covered.<svg viewBox="0 0 100 10" preserveAspectRatio="none"><path id="underStitch" d="M0 5 L100 5"/></svg></span></span>
+    </h1>
+  </div>
+  <div class="hero__bottom" id="heroBottom">
+    <p class="hero__sub">Made-to-measure covers for sofas, cars, luggage, appliances — and anything else with a surface. <strong>Measured in millimetres, stitched to fit, adjusted until flush.</strong></p>
+    <div class="hero__ctas">
+      <a class="btn btn--lal" href="#order" data-magnetic><span>Place an order</span><i>→</i></a>
+      <a class="btn btn--ghost" href="tel:+919819827871" data-magnetic><span>Call the shop</span><i>✆</i></a>
+    </div>
+  </div>
+  <div class="hero__scroll">Scroll to unroll</div>
+</section>
+
+<!-- tape marquee -->
+<div class="marquee" id="marquee" aria-hidden="true">
+  <div class="marquee__track" id="marqueeTrack"></div>
+</div>
+
+<!-- fitting room -->
+<section class="fit weave weave--light section-pad" id="fit">
+  <div class="fit__grid">
+    <div>
+      <p class="eyebrow" data-reveal>The fitting room</p>
+      <h2 class="h2" data-reveal>Pull the cover.<br>Watch it <em>fit</em>.</h2>
+      <p class="fit__copy" data-reveal>This is the whole trade in one motion. Pick a piece, <strong>drag the sheet down over it</strong> — measured to the millimetre, hand-stitched, never glued or laminated. When it sits flush, it's done.</p>
+      <div class="fit__tabs" data-reveal role="tablist" aria-label="Pick a piece to cover">
+        <button class="fit__tab active" data-item="0">Dining table</button>
+        <button class="fit__tab" data-item="1">Sofa</button>
+        <button class="fit__tab" data-item="2">Chair</button>
+        <button class="fit__tab" data-item="3">Suitcase</button>
+        <button class="fit__tab" data-item="4">Garden swing</button>
+      </div>
+      <div class="fit__steps" data-reveal aria-hidden="true">
+        <span class="fit__step" data-n="1" id="fitStep0">Measure</span><i></i>
+        <span class="fit__step" data-n="2" id="fitStep1">Chalk</span><i></i>
+        <span class="fit__step" data-n="3" id="fitStep2">Stitch</span><i></i>
+        <span class="fit__step" data-n="4" id="fitStep3">Fit</span>
+      </div>
+      <div class="fit__meter" data-reveal><i id="fitFill"></i><b id="fitReadout">COVERED 12%</b></div>
+      <div class="fit__actions" data-reveal>
+        <button class="fit__auto" id="fitAuto" data-magnetic>▶ Run the table</button>
+        <button class="cover-card__order" id="fitOrder" data-order="Dining table cover">Order this cover <i>→</i></button>
+      </div>
+    </div>
+    <div class="fit__tilt" data-reveal>
+      <div class="fit__stage" id="fitStage" data-cursor="PULL" aria-label="Interactive cover fitting demo">
+        <img id="fitImg" src="lal-babu-images/table-2.jpg" alt="Dining table being covered with transparent PVC">
+        <div class="fit__measure" id="fitMeasure">
+          <i class="fit__corner fit__corner--tl"></i><i class="fit__corner fit__corner--tr"></i>
+          <i class="fit__corner fit__corner--bl"></i><i class="fit__corner fit__corner--br"></i>
+          <div class="fit__dim fit__dim--w" id="fitDimW"><span id="fitDimWLbl">W 0 MM</span></div>
+          <div class="fit__dim fit__dim--h" id="fitDimH"><span id="fitDimHLbl">H 0 MM</span></div>
+        </div>
+        <svg class="fit__chalk" id="fitChalk" viewBox="0 0 100 75" preserveAspectRatio="none" aria-hidden="true">
+          <rect id="fitChalkRect" x="7" y="8" width="86" height="59" pathLength="100"/>
+        </svg>
+        <div class="fit__sheet" id="fitSheet"></div>
+        <svg class="fit__hemsvg" id="fitHemSvg" aria-hidden="true">
+          <path class="hem-back" id="fitHemBack" d=""/>
+          <path class="hem-stitch" id="fitHemStitch" d=""/>
+        </svg>
+        <span class="fit__handle" id="fitHandle">☰ PULL ⌄</span>
+        <div class="fit__stamp" id="fitStamp">Fitted<small>LAL BABU · Nº 13 · GRANT RD E</small></div>
+        <div class="fit__burst" id="fitBurst"></div>
+        <div class="fit__wipe" id="fitWipe"></div>
+        <p class="fit__hint" id="fitHint">Drag anywhere on the photo</p>
+      </div>
+      <p class="fit__plate">PATTERN TABLE Nº 13 — GRANT ROAD E, MUMBAI</p>
+    </div>
+  </div>
+</section>
+
+<!-- covers -->
+<section class="covers section-pad" id="covers">
+  <div class="covers__head">
+    <div>
+      <p class="eyebrow" style="color:var(--tape)" data-reveal>What we cover</p>
+      <h2 class="h2" data-reveal>If it has a surface,<br>it has a cover here.</h2>
+    </div>
+    <p data-reveal>Six families of work below — but the honest answer is “bring the measurements”. Odd shapes are the point of custom.</p>
+  </div>
+  <div class="covers__grid" id="coversGrid">
+
+    <article class="cover-card" data-cursor="FIT">
+      <figure class="cover-card__img"><img src="lal-babu-images/table-2.jpg" alt="Hand-stitched transparent cover fitted on a marble dining table" loading="lazy"></figure>
+      <div class="cover-card__top">
+        <span class="cover-card__num">HAND-STITCHED</span>
+      </div>
+      <div>
+        <h3>Dining tables</h3>
+        <p>Thick transparent sheet, stitched — never laminated. No adhesive, no spray chemicals, removable any time. Lace edging on request.</p>
+        <p class="cover-card__spec">Stitched edge · lace trim · no adhesive</p>
+      </div>
+      <button class="cover-card__order" data-order="Dining table cover">Order this <i>→</i></button>
+    </article>
+
+    <article class="cover-card" data-cursor="FIT">
+      <figure class="cover-card__img"><img src="lal-babu-images/sofa-1.jpg" alt="Curved white sofa fitted with a transparent protective cover" loading="lazy"></figure>
+      <div class="cover-card__top">
+        <span class="cover-card__num">W × D × H</span>
+      </div>
+      <div>
+        <h3>Sofas &amp; seating</h3>
+        <p>Full sets, single seats, recliners, diwans. Cushion pockets cut separately so nothing bunches.</p>
+        <p class="cover-card__spec">Zip · elastic hem · tie-back</p>
+      </div>
+      <button class="cover-card__order" data-order="Sofa / seating cover">Order this <i>→</i></button>
+    </article>
+
+    <article class="cover-card" data-cursor="FIT">
+      <figure class="cover-card__img"><img src="lal-babu-images/chair-2.jpg" alt="White armchair with a fitted transparent cover" loading="lazy"></figure>
+      <div class="cover-card__top">
+        <span class="cover-card__num">PER CHAIR</span>
+      </div>
+      <div>
+        <h3>Chairs</h3>
+        <p>Dining chairs, armchairs, office chairs — fitted to the frame so the shape still reads through.</p>
+        <p class="cover-card__spec">Fitted back · seat pocket · clear PVC</p>
+      </div>
+      <button class="cover-card__order" data-order="Chair covers">Order this <i>→</i></button>
+    </article>
+
+    <article class="cover-card" data-cursor="FIT">
+      <figure class="cover-card__img"><img src="lal-babu-images/outdoor-1.jpg" alt="Terrace sofa set protected with fitted outdoor covers" loading="lazy"></figure>
+      <div class="cover-card__top">
+        <span class="cover-card__num">MONSOON-GRADE</span>
+      </div>
+      <div>
+        <h3>Outdoor &amp; terrace</h3>
+        <p>Garden sets, swings, poolside loungers. Coated fabrics with drainage in mind, tied down against wind.</p>
+        <p class="cover-card__spec">UV-coated · eyelets · drawcord</p>
+      </div>
+      <button class="cover-card__order" data-order="Outdoor / terrace furniture cover">Order this <i>→</i></button>
+    </article>
+
+    <article class="cover-card" data-cursor="FIT">
+      <figure class="cover-card__img"><img src="lal-babu-images/luggage-1.jpg" alt="Set of suitcases in fitted protective covers" loading="lazy"></figure>
+      <div class="cover-card__top">
+        <span class="cover-card__num">CM-EXACT</span>
+      </div>
+      <div>
+        <h3>Luggage</h3>
+        <p>Trolleys and suitcases sized to the centimetre, with handle and wheel cut-outs that line up.</p>
+        <p class="cover-card__spec">Handle slits · wheel cut-outs</p>
+      </div>
+      <button class="cover-card__order" data-order="Luggage cover">Order this <i>→</i></button>
+    </article>
+
+    <article class="cover-card" data-cursor="ASK">
+      <figure class="cover-card__img"><img src="lal-babu-images/furniture-1.jpg" alt="Antique wooden sideboard wrapped in a custom transparent cover" loading="lazy"></figure>
+      <div class="cover-card__top">
+        <span class="cover-card__num">BRING IT IN</span>
+      </div>
+      <div>
+        <h3>Cars, appliances &amp; the odd ones</h3>
+        <p>Car bodies, washing machines, sideboards, harmoniums, carrom boards. If it can be measured, it can be covered.</p>
+        <p class="cover-card__spec">Custom pattern · no minimums</p>
+      </div>
+      <button class="cover-card__order" data-order="Something else">Order this <i>→</i></button>
+    </article>
+
+  </div>
+</section>
+
+<!-- work gallery -->
+<section class="work section-pad weave weave--dark" id="work">
+  <div class="work__head">
+    <div>
+      <p class="eyebrow" style="color:var(--lal)" data-reveal>From the table to your home</p>
+      <h2 class="h2" data-reveal>Recent work,<br>on the actual pieces.</h2>
+    </div>
+    <p data-reveal>Every photo below is a real fitting — marble tables, terrace sets, poolside sofas, suitcases before a season in storage. Tap any one to look closer.</p>
+  </div>
+  <div class="work__grid" id="workGrid">
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/table-1.jpg" alt="Round dining table with fitted cover" loading="lazy"><figcaption>Round dining table</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/outdoor-2.jpg" alt="Poolside sofas under fitted night covers" loading="lazy"><figcaption>Poolside set, covered for the season</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/chair-3.jpg" alt="Dining chair with stitched transparent cover" loading="lazy"><figcaption>Dining chair, clear stitched cover</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/sofa-2.jpg" alt="Leather sofa set in transparent covers" loading="lazy"><figcaption>Leather set, wrapped &amp; fitted</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/table-3.jpg" alt="Marble dining table with transparent stitched cover" loading="lazy"><figcaption>Marble top, hand-stitched sheet</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/outdoor-5.jpg" alt="Terrace swing with fitted transparent cover" loading="lazy"><figcaption>Terrace swing</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/table-4.jpg" alt="Dining table fitted with protective cover" loading="lazy"><figcaption>Dining table fitting</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/sofa-3.jpg" alt="Fabric sofa with protective cover" loading="lazy"><figcaption>Sofa, cushions pocketed</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/chair-4.jpg" alt="Houndstooth chair with fitted clear cover" loading="lazy"><figcaption>Upholstered chair, clear fit</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/outdoor-6.jpg" alt="Terrace furniture under fitted cover" loading="lazy"><figcaption>Terrace piece, tied down</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/table-6.jpg" alt="Table cover with lace border detail" loading="lazy"><figcaption>Lace-edge detail</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/luggage-2.jpg" alt="Suitcases with transparent covers" loading="lazy"><figcaption>Trolleys, cm-exact</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/sofa-4.jpg" alt="Wooden sofa with fitted cover" loading="lazy"><figcaption>Carved sofa, fitted</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/outdoor-4.jpg" alt="Garden furniture under black outdoor cover" loading="lazy"><figcaption>Garden piece, monsoon-grade</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/furniture-2.jpg" alt="Glass display cabinet with custom cover" loading="lazy"><figcaption>Display cabinet — an odd one</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/outdoor-3.jpg" alt="Covered outdoor sofa by the pool at night" loading="lazy"><figcaption>Poolside, after dark</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/table-5.jpg" alt="Glossy wooden table with transparent cover" loading="lazy"><figcaption>Polished wood, protected</figcaption></figure>
+    <figure class="work__item" data-cursor="VIEW"><img src="lal-babu-images/chair-1.jpg" alt="Outdoor chairs with fitted covers" loading="lazy"><figcaption>Verandah chairs</figcaption></figure>
+  </div>
+</section>
+
+<!-- lightbox -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <img id="lightboxImg" src="" alt="">
+  <p class="lightbox__cap" id="lightboxCap"></p>
+  <button class="lightbox__btn lightbox__prev" id="lightboxPrev" aria-label="Previous photo">‹</button>
+  <button class="lightbox__btn lightbox__next" id="lightboxNext" aria-label="Next photo">›</button>
+  <button class="lightbox__close" id="lightboxClose">CLOSE ✕</button>
+</div>
+
+<!-- process -->
+<section class="process section-pad weave weave--dark" id="process">
+  <p class="eyebrow" style="color:var(--tape)" data-reveal>How a cover gets made</p>
+  <h2 class="h2" data-reveal style="margin-bottom:clamp(2.5rem,6vh,4.5rem)">Four steps.<br>One fit.</h2>
+  <div class="process__wrap">
+    <div class="process__sticky">
+      <div class="process__bignum" id="bigNum">1<b id="bigNumFill">1</b></div>
+    </div>
+    <div class="process__steps" id="steps">
+      <div class="process__thread"><svg preserveAspectRatio="none" viewBox="0 0 2 100"><path id="threadPath" d="M1 0 L1 100" vector-effect="non-scaling-stroke"/></svg></div>
+
+      <div class="p-step active" data-step="1">
+        <p class="p-step__tag">Step 1 — at your place or ours</p>
+        <h3>Measure</h3>
+        <p>Width, depth, drop, every curve and cut-out — taken <b>down to the millimetre</b>, on site or in the shop. Photos help; the tape decides.</p>
+      </div>
+
+      <div class="p-step" data-step="2">
+        <p class="p-step__tag">Step 2 — chalk on cloth</p>
+        <h3>Pattern</h3>
+        <p>Measurements become a pattern, chalked straight onto the fabric. Seam allowances, zip lines and fold points marked before a single cut.</p>
+      </div>
+
+      <div class="p-step" data-step="3">
+        <p class="p-step__tag">Step 3 — the machine room</p>
+        <h3>Stitch</h3>
+        <p><b>Double-needle seams</b>, reinforced corners, and the closure the piece demands — zips, elastic, ties, velcro or eyelets.</p>
+      </div>
+
+      <div class="p-step" data-step="4">
+        <p class="p-step__tag">Step 4 — on the piece itself</p>
+        <h3>Fit</h3>
+        <p>The cover goes on the actual piece. If it doesn’t sit flush, it goes back on the table. <b>It leaves when it fits</b> — not before.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- materials -->
+<section class="materials weave weave--light section-pad" id="materials">
+  <p class="eyebrow" data-reveal>Fabric, chosen for the job</p>
+  <h2 class="h2" data-reveal>Five workhorses<br>on the shelf.</h2>
+  <div class="materials__row" id="swatches">
+    <div class="swatch swatch--canvas" data-reveal>
+      <div class="swatch__chip"></div>
+      <div><h4>Canvas</h4><p>Tough, breathable, takes dust and daily handling. The default for indoor furniture.</p></div>
+    </div>
+    <div class="swatch swatch--rexine" data-reveal>
+      <div class="swatch__chip"></div>
+      <div><h4>Rexine</h4><p>Leather look, wipe-clean surface. Good for seating that sees spills.</p></div>
+    </div>
+    <div class="swatch swatch--pvc" data-reveal>
+      <div class="swatch__chip"></div>
+      <div><h4>PVC-coated</h4><p>Waterproof. The monsoon answer for terraces, machines and anything near a window.</p></div>
+    </div>
+    <div class="swatch swatch--quilt" data-reveal>
+      <div class="swatch__chip"></div>
+      <div><h4>Quilted</h4><p>Padded protection for pieces that travel or get stacked — instruments, glass tops.</p></div>
+    </div>
+    <div class="swatch swatch--mesh" data-reveal>
+      <div class="swatch__chip"></div>
+      <div><h4>Mesh</h4><p>Air through, dust out. For electronics and appliances that need to breathe.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- promise -->
+<section class="promise section-pad" id="promise">
+  <p class="eyebrow" style="color:var(--tape)" data-reveal>Why made-to-measure</p>
+  <h2 class="h2" data-reveal>“Almost fits”<br>protects almost nothing.</h2>
+  <div class="promise__grid">
+    <div class="promise__item" data-reveal>
+      <hr class="stitch">
+      <h3>Cut to your piece</h3>
+      <p>No universal sizes, no excess fabric pooling at the feet. Your measurements are the pattern.</p>
+    </div>
+    <div class="promise__item" data-reveal>
+      <hr class="stitch">
+      <h3>Built for the season</h3>
+      <p>Fabric matched to monsoon, summer or storage — not whatever roll is nearest.</p>
+    </div>
+    <div class="promise__item" data-reveal>
+      <hr class="stitch">
+      <h3>Fitted before it leaves</h3>
+      <p>Every cover is tried on and adjusted. If something shifts later, bring it back to the table.</p>
+    </div>
+  </div>
+</section>
+
+<!-- order -->
+<section class="order weave weave--light section-pad" id="order">
+  <p class="eyebrow" data-reveal>Place an order</p>
+  <h2 class="h2" data-reveal>Fill the slip.<br>We take it from there.</h2>
+  <div class="order__grid">
+    <form class="order__form" id="orderForm" data-reveal>
+      <div class="order__row">
+        <div class="field">
+          <label for="ordItem">What needs covering</label>
+          <select id="ordItem" name="item">
+            <option>Dining table cover</option>
+            <option>Sofa / seating cover</option>
+            <option>Chair covers</option>
+            <option>Outdoor / terrace furniture cover</option>
+            <option>Luggage cover</option>
+            <option>Car / bike cover</option>
+            <option>Appliance cover</option>
+            <option>Something else</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ordMaterial">Material</label>
+          <select id="ordMaterial" name="material">
+            <option>Transparent PVC — stitched, no adhesive</option>
+            <option>Canvas</option>
+            <option>Rexine</option>
+            <option>PVC-coated fabric (waterproof)</option>
+            <option>Quilted</option>
+            <option>Mesh</option>
+            <option>Not sure — suggest for me</option>
+          </select>
+        </div>
+      </div>
+      <div class="order__row">
+        <div class="field">
+          <label for="ordSize">Measurements (approx. is fine)</label>
+          <input id="ordSize" name="size" type="text" placeholder="e.g. 72 × 36 × 30 inch" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="ordQty">Quantity</label>
+          <input id="ordQty" name="qty" type="number" min="1" value="1">
+        </div>
+      </div>
+      <div class="field">
+        <label for="ordName">Your name</label>
+        <input id="ordName" name="name" type="text" placeholder="So we know who's calling" autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="ordNotes">Anything else</label>
+        <textarea id="ordNotes" name="notes" placeholder="Lace edge? Home measurement needed? Area of Mumbai? Photos help — you can attach them in WhatsApp after sending."></textarea>
+      </div>
+    </form>
+    <aside class="order__ticket" data-reveal aria-live="polite">
+      <dl>
+        <div><dt>Item</dt><dd id="tickItem"></dd></div>
+        <div><dt>Material</dt><dd id="tickMaterial"></dd></div>
+        <div><dt>Size</dt><dd id="tickSize"></dd></div>
+        <div><dt>Quantity</dt><dd id="tickQty"></dd></div>
+        <div><dt>Name</dt><dd id="tickName"></dd></div>
+        <div><dt>Notes</dt><dd id="tickNotes"></dd></div>
+      </dl>
+      <button class="btn btn--lal order__send" id="orderSend" type="button" data-magnetic><span>Send order on WhatsApp</span><i>→</i></button>
+      <p class="order__alt">Prefer talking? <a href="tel:+919819827871">Call 98198 27871</a> or <a href="tel:+917506062018">75060 62018</a></p>
+    </aside>
+  </div>
+</section>
+
+<!-- visit -->
+<section class="visit section-pad weave weave--dark" id="visit">
+  <div class="visit__grid">
+    <div>
+      <p class="eyebrow" style="color:var(--lal)" data-reveal>Start with a measurement</p>
+      <h2 class="h2" data-reveal>Bring the piece,<br>or just <em>its numbers</em>.</h2>
+      <a class="visit__phone" href="tel:+919819827871" data-reveal data-magnetic>98198 27871</a>
+      <a class="visit__phone" href="tel:+917506062018" data-reveal data-magnetic style="display:block;margin-top:0;width:fit-content">75060 62018</a>
+      <p data-reveal style="color:var(--chalk-dim);max-width:46ch">Call or message on WhatsApp with a photo and rough sizes — you’ll get a fabric suggestion and a price before you travel. Or walk in; the tape is always on the table.</p>
+      <div class="visit__ctas" data-reveal>
+        <a class="btn btn--lal" href="https://wa.me/919819827871?text=Hi%20Lal%20Babu%20Covers%2C%20here%20are%20my%20measurements%3A" target="_blank" rel="noopener" data-magnetic><span>WhatsApp the shop</span><i>→</i></a>
+        <a class="btn btn--ghost" href="https://www.google.com/maps/search/?api=1&query=LAL+BABU+Cover+Maker+Dinath+Building+Grant+Road+East+Mumbai" target="_blank" rel="noopener" data-magnetic><span>Get directions</span><i>↗</i></a>
+      </div>
+    </div>
+    <div class="visit__card" data-reveal>
+      <dl>
+        <div>
+          <dt>Address</dt>
+          <dd>The Platinum Mall, Dinath Building, 2nd Floor, Room 13,<br>Pathe Bapu Rao Marg, Grant Road East,<br>Opp. Delhi Darbar Hotel, Mumbai 400004</dd>
+        </div>
+        <div>
+          <dt>Hours</dt>
+          <dd class="visit__hours">Opens 9 am · call ahead to confirm</dd>
+        </div>
+        <div>
+          <dt>Phone / WhatsApp</dt>
+          <dd>
+            <a href="tel:+919819827871">98198 27871</a> · <a href="https://wa.me/919819827871" target="_blank" rel="noopener">WhatsApp</a><br>
+            <a href="tel:+917506062018">75060 62018</a> · <a href="https://wa.me/917506062018" target="_blank" rel="noopener">WhatsApp</a>
+          </dd>
+        </div>
+        <div>
+          <dt>Landmark</dt>
+          <dd>Near Delhi Darbar Hotel · short walk from Grant Road station (E)</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- footer -->
+<footer class="footer">
+  <div class="footer__big" aria-hidden="true">Lal Babu</div>
+  <hr class="stitch" style="margin:clamp(1.5rem,4vh,2.5rem) var(--pad) 0">
+  <div class="footer__bar">
+    <span>© <span id="year"></span> Lal Babu Cover Maker</span>
+    <span>Every surface · Every season · Grant Road E, Mumbai</span>
+    <span><a href="tel:+919819827871">98198 27871</a> · <a href="tel:+917506062018">75060 62018</a></span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var finePointer = window.matchMedia("(hover:hover) and (pointer:fine)").matches;
+gsap.registerPlugin(ScrollTrigger);
+document.getElementById("year").textContent = new Date().getFullYear();
+
+/* ============ marquee content ============ */
+(function buildMarquee(){
+  var items = ["Sofa sets","Car bodies","Luggage","Washing machines","ACs & fridges","Dining tables","Garden swings","Sewing machines","Carrom boards","Anything measurable"];
+  var chunk = document.createElement("div");
+  chunk.className = "marquee__chunk";
+  var cm = 0;
+  items.forEach(function(t){
+    var tick = document.createElement("i"); tick.textContent = (cm += 10);
+    var word = document.createElement("span"); word.textContent = t;
+    chunk.appendChild(tick); chunk.appendChild(word);
+  });
+  var track = document.getElementById("marqueeTrack");
+  for (var i = 0; i < 3; i++) track.appendChild(chunk.cloneNode(true));
+  if (!reduced){
+    var w = 0;
+    requestAnimationFrame(function(){
+      w = track.children[0].offsetWidth;
+      gsap.to(track, { x: -w, duration: 26, ease: "none", repeat: -1 });
+    });
+  }
+})();
+
+/* ============ custom cursor ============ */
+if (finePointer){
+  var dot = document.getElementById("cursorDot"),
+      ring = document.getElementById("cursorRing"),
+      label = document.getElementById("cursorLabel"),
+      dx = gsap.quickTo(dot, "x", {duration:.08, ease:"power2"}),
+      dy = gsap.quickTo(dot, "y", {duration:.08, ease:"power2"}),
+      rx = gsap.quickTo(ring, "x", {duration:.32, ease:"power3"}),
+      ry = gsap.quickTo(ring, "y", {duration:.32, ease:"power3"});
+  window.addEventListener("mousemove", function(e){
+    dx(e.clientX); dy(e.clientY); rx(e.clientX); ry(e.clientY);
+  });
+  document.querySelectorAll("[data-cursor]").forEach(function(el){
+    el.addEventListener("mouseenter", function(){
+      label.textContent = el.getAttribute("data-cursor");
+      document.body.classList.add("cursor-grow");
+    });
+    el.addEventListener("mouseleave", function(){ document.body.classList.remove("cursor-grow"); });
+  });
+}
+
+/* ============ magnetic buttons ============ */
+if (finePointer && !reduced){
+  document.querySelectorAll("[data-magnetic]").forEach(function(el){
+    var sx = gsap.quickTo(el, "x", {duration:.4, ease:"power3"}),
+        sy = gsap.quickTo(el, "y", {duration:.4, ease:"power3"});
+    el.addEventListener("mousemove", function(e){
+      var r = el.getBoundingClientRect();
+      sx((e.clientX - r.left - r.width/2) * .28);
+      sy((e.clientY - r.top - r.height/2) * .34);
+    });
+    el.addEventListener("mouseleave", function(){ sx(0); sy(0); });
+  });
+}
+
+/* ============ measuring-tape scroll progress ============ */
+(function tape(){
+  var bar = document.getElementById("tapeProgress"),
+      readout = document.getElementById("tapeReadout");
+  function update(){
+    var max = document.documentElement.scrollHeight - window.innerHeight,
+        p = max > 0 ? Math.min(1, window.scrollY / max) : 0,
+        metres = (document.documentElement.scrollHeight / 1000) * p;
+    bar.style.width = (p * 100) + "%";
+    readout.textContent = "MEASURED " + metres.toFixed(2) + " M";
+  }
+  window.addEventListener("scroll", update, {passive:true});
+  window.addEventListener("resize", update);
+  update();
+})();
+
+/* ============ nav background on scroll ============ */
+var nav = document.getElementById("nav");
+window.addEventListener("scroll", function(){
+  nav.classList.toggle("scrolled", window.scrollY > 40);
+}, {passive:true});
+
+/* ============ THREE.js fabric ============ */
+var clothPlay = true;
+(function cloth(){
+  var canvas = document.getElementById("cloth");
+  try {
+    var renderer = new THREE.WebGLRenderer({canvas:canvas, alpha:true, antialias:true});
+  } catch(e){ canvas.style.display = "none"; return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(38, 1, .1, 100);
+  camera.position.set(0, .4, 9);
+
+  var geo = new THREE.PlaneGeometry(17, 10, 72, 42);
+  var base = geo.attributes.position.array.slice();
+
+  var fabric = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({color:0x1c2746, side:THREE.DoubleSide}));
+  var thread = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xe03a2f, wireframe:true, transparent:true, opacity:.085}));
+  var group = new THREE.Group();
+  group.add(fabric); group.add(thread);
+  group.rotation.x = -.42; group.rotation.z = -.06; group.position.y = -.6;
+  scene.add(group);
+
+  scene.add(new THREE.AmbientLight(0x2a3450, 1));
+  var key = new THREE.DirectionalLight(0xfff2da, .95); key.position.set(3, 4, 5); scene.add(key);
+  var warm = new THREE.PointLight(0xe03a2f, .6, 26); warm.position.set(-6, -4, 3); scene.add(warm);
+  var cool = new THREE.PointLight(0xf2c53d, .35, 30); cool.position.set(6, 3, 4); scene.add(cool);
+
+  var mouse = {x:0, y:0, tx:0, ty:0};
+  window.addEventListener("mousemove", function(e){
+    mouse.tx = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.ty = -(e.clientY / window.innerHeight) * 2 + 1;
+  });
+
+  function resize(){
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  window.addEventListener("resize", resize); resize();
+
+  var pos = geo.attributes.position, t = 0;
+  function ripple(){
+    t += reduced ? 0 : .016;
+    mouse.x += (mouse.tx - mouse.x) * .04;
+    mouse.y += (mouse.ty - mouse.y) * .04;
+    var arr = pos.array;
+    for (var i = 0; i < arr.length; i += 3){
+      var x = base[i], y = base[i+1];
+      var dxm = x - mouse.x * 8, dym = y - mouse.y * 5;
+      var dist = Math.sqrt(dxm*dxm + dym*dym);
+      arr[i+2] =
+        Math.sin(x * .55 + t * 1.1) * .42 +
+        Math.sin(y * .78 + t * .8) * .3 +
+        Math.sin((x + y) * .32 + t * .6) * .22 +
+        Math.cos(dist * 1.1 - t * 2.2) * Math.max(0, 1 - dist / 5.5) * .5;
+    }
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
+    group.rotation.y = mouse.x * .05;
+    renderer.render(scene, camera);
+    if (clothPlay && !reduced) requestAnimationFrame(ripple);
+  }
+  ripple();
+  if (reduced){ renderer.render(scene, camera); return; }
+  new IntersectionObserver(function(entries){
+    var visible = entries[0].isIntersecting;
+    if (visible && !clothPlay){ clothPlay = true; ripple(); }
+    else if (!visible){ clothPlay = false; }
+  }).observe(document.getElementById("top"));
+})();
+
+/* ============ preloader + hero entrance ============ */
+(function intro(){
+  var pre = document.getElementById("preloader"),
+      stitchEl = document.getElementById("preStitch"),
+      countEl = document.getElementById("preCount"),
+      title = document.querySelectorAll("#heroTitle .line > span"),
+      tl = gsap.timeline();
+
+  gsap.set(title, {yPercent:110});
+  gsap.set(["#heroEyebrow", "#heroBottom", ".hero__scroll"], {opacity:0, y:24});
+  gsap.set("#underStitch", {strokeDashoffset:120, strokeDasharray:"10 8"});
+
+  if (reduced){
+    pre.remove();
+    gsap.set(title, {yPercent:0});
+    gsap.set(["#heroEyebrow", "#heroBottom", ".hero__scroll"], {opacity:1, y:0});
+    gsap.set("#underStitch", {strokeDashoffset:0});
+    return;
+  }
+
+  var counter = {v:0};
+  tl.to(stitchEl, {scaleX:1, duration:1.25, ease:"power2.inOut"}, 0)
+    .to(counter, {v:100, duration:1.25, ease:"power2.inOut",
+       onUpdate:function(){ countEl.textContent = Math.round(counter.v); }}, 0)
+    .to(pre, {yPercent:-100, duration:.8, ease:"power3.inOut", delay:.15,
+       onComplete:function(){ pre.remove(); }})
+    .to("#heroEyebrow", {opacity:1, y:0, duration:.7, ease:"power3.out"}, "-=.35")
+    .to(title, {yPercent:0, duration:1.05, ease:"power4.out", stagger:.12}, "-=.55")
+    .to("#underStitch", {strokeDashoffset:0, duration:.9, ease:"power2.out"}, "-=.4")
+    .to(["#heroBottom", ".hero__scroll"], {opacity:1, y:0, duration:.8, ease:"power3.out", stagger:.1}, "-=.6");
+})();
+
+/* ============ scroll reveals ============ */
+gsap.utils.toArray("[data-reveal]").forEach(function(el, i){
+  if (reduced) return;
+  gsap.fromTo(el, {opacity:0, y:44}, {
+    opacity:1, y:0, duration:.9, ease:"power3.out",
+    scrollTrigger:{trigger:el, start:"top 86%"},
+    delay: (i % 3) * .06
+  });
+});
+
+/* ============ cover cards stagger ============ */
+if (!reduced){
+  gsap.fromTo(".cover-card", {opacity:0, y:50}, {
+    opacity:1, y:0, duration:.8, ease:"power3.out", stagger:.09,
+    scrollTrigger:{trigger:"#coversGrid", start:"top 82%"}
+  });
+}
+
+/* ============ process: thread draw + step states ============ */
+(function process(){
+  var path = document.getElementById("threadPath"),
+      steps = gsap.utils.toArray(".p-step"),
+      bigFill = document.getElementById("bigNumFill"),
+      bigNum = document.getElementById("bigNum");
+  var len = 100;
+  path.style.strokeDasharray = "9 7";
+  if (reduced){
+    steps.forEach(function(s){ s.classList.add("active"); });
+    return;
+  }
+  gsap.fromTo("#threadPath", {opacity:0}, {opacity:1, duration:.4,
+    scrollTrigger:{trigger:"#steps", start:"top 75%"}});
+  gsap.fromTo(".process__thread", {scaleY:0, transformOrigin:"top"}, {scaleY:1, ease:"none",
+    scrollTrigger:{trigger:"#steps", start:"top 70%", end:"bottom 65%", scrub:.4}});
+
+  steps.forEach(function(step){
+    ScrollTrigger.create({
+      trigger: step, start:"top 62%", end:"bottom 62%",
+      onToggle:function(self){
+        if (self.isActive){
+          steps.forEach(function(s){ s.classList.remove("active"); });
+          step.classList.add("active");
+          var n = step.getAttribute("data-step");
+          bigNum.childNodes[0].nodeValue = n;
+          bigFill.textContent = n;
+          bigFill.style.clipPath = "inset(0 0 0 0)";
+          gsap.fromTo(bigFill, {clipPath:"inset(100% 0 0 0)"}, {clipPath:"inset(0% 0 0 0)", duration:.5, ease:"power3.out"});
+        }
+      }
+    });
+  });
+})();
+
+/* ============ fitting room ============ */
+(function fittingRoom(){
+  var stage = document.getElementById("fitStage");
+  if (!stage) return;
+  var sheet = document.getElementById("fitSheet"),
+      hemBack = document.getElementById("fitHemBack"),
+      hemStitch = document.getElementById("fitHemStitch"),
+      handle = document.getElementById("fitHandle"),
+      readout = document.getElementById("fitReadout"),
+      fill = document.getElementById("fitFill"),
+      stamp = document.getElementById("fitStamp"),
+      img = document.getElementById("fitImg"),
+      measure = document.getElementById("fitMeasure"),
+      dimW = document.getElementById("fitDimW"),
+      dimH = document.getElementById("fitDimH"),
+      dimWLbl = document.getElementById("fitDimWLbl"),
+      dimHLbl = document.getElementById("fitDimHLbl"),
+      chalk = document.getElementById("fitChalk"),
+      chalkRect = document.getElementById("fitChalkRect"),
+      burst = document.getElementById("fitBurst"),
+      wipe = document.getElementById("fitWipe"),
+      hint = document.getElementById("fitHint"),
+      orderBtn = document.getElementById("fitOrder"),
+      autoBtn = document.getElementById("fitAuto"),
+      steps = [0,1,2,3].map(function(i){ return document.getElementById("fitStep" + i); }),
+      tabs = document.querySelectorAll(".fit__tab");
+
+  var items = [
+    {img:"lal-babu-images/table-2.jpg",  order:"Dining table cover",                w:1830, h:760,  alt:"Dining table being covered with transparent PVC"},
+    {img:"lal-babu-images/sofa-1.jpg",   order:"Sofa / seating cover",              w:2450, h:780,  alt:"Sofa being covered with transparent PVC"},
+    {img:"lal-babu-images/chair-2.jpg",  order:"Chair covers",                      w:620,  h:980,  alt:"Armchair being covered with transparent PVC"},
+    {img:"lal-babu-images/luggage-1.jpg",order:"Luggage cover",                     w:480,  h:760,  alt:"Suitcases being covered with fitted covers"},
+    {img:"lal-babu-images/outdoor-5.jpg",order:"Outdoor / terrace furniture cover", w:1400, h:1800, alt:"Garden swing being covered for the monsoon"}
+  ];
+  var clipOK = (window.CSS && CSS.supports && CSS.supports("clip-path", "path('M0 0 H 10 V 10 Z')"));
+  var state = {p:.12}, current = 0, done = false, seq = null, vel = 0, lastP = .12,
+      wt = 0, ampMul = {v:1}, running = false, visible = true, played = false;
+
+  /* ----- wavy sheet edge, redrawn every frame ----- */
+  var W = 0, H = 0;
+  function sizes(){ var r = stage.getBoundingClientRect(); W = r.width; H = r.height; }
+  window.addEventListener("resize", sizes);
+
+  function edgeY(x){
+    var base = state.p * H;
+    var amp = Math.min(24, (2.2 + Math.abs(vel) * 2600)) * ampMul.v;
+    if (state.p <= 0.002 || state.p >= 0.998) amp = 0;
+    var y = base
+      + Math.sin((x / W) * 6.9 + wt * 2.2) * amp * .58
+      + Math.sin((x / W) * 14.8 - wt * 1.55) * amp * .3;
+    return Math.max(0, Math.min(H, y));
+  }
+  function draw(){
+    var N = 26, pts = "", rev = "", x, y, i;
+    for (i = 0; i <= N; i++){
+      x = (W * i) / N;
+      y = edgeY(x).toFixed(1);
+      pts += (i ? " L" : "M") + x.toFixed(1) + " " + y;
+      rev = " L" + x.toFixed(1) + " " + y + rev;
+    }
+    hemBack.setAttribute("d", pts);
+    hemStitch.setAttribute("d", pts);
+    hemBack.style.opacity = hemStitch.style.opacity = state.p < .015 ? 0 : 1;
+    hemStitch.style.strokeDashoffset = (-wt * 26) + "px";
+    if (clipOK){
+      /* top-left → top-right → down right edge → wave back right-to-left → close */
+      sheet.style.clipPath = "path('M0 0 L" + W + " 0" + rev + " Z')";
+      sheet.style.height = "100%";
+    } else {
+      sheet.style.height = (state.p * 100) + "%";
+    }
+    handle.style.top = edgeY(W * .9) + "px";
+    var pct = Math.round(state.p * 100);
+    readout.textContent = done ? "FITTED FLUSH ✓" : "COVERED " + pct + "%";
+    fill.style.width = pct + "%";
+    img.style.transform = "scale(" + (1.045 - state.p * .045) + ")";
+  }
+  function tick(){
+    if (!visible) return;
+    wt += 0.055;
+    vel *= 0.9;
+    draw();
+  }
+
+  /* ----- step rail ----- */
+  function setStep(n){
+    steps.forEach(function(s, i){ s.classList.toggle("on", i <= n && n > -1); });
+  }
+
+  /* ----- stamp / burst ----- */
+  function complete(){
+    if (done) return;
+    done = true;
+    stage.classList.add("done");
+    setStep(3);
+    hint.textContent = "Tap another piece";
+    if (reduced){ stamp.style.transform = "translate(-50%,-50%) rotate(-9deg) scale(1)"; draw(); return; }
+    gsap.to(ampMul, {v:0, duration:.5, ease:"power2.out"});
+    gsap.fromTo(stamp,
+      {scale:2.6, rotate:-9, opacity:0, xPercent:-50, yPercent:-50},
+      {scale:1, opacity:1, duration:.4, ease:"power4.in", xPercent:-50, yPercent:-50,
+       onComplete:function(){
+         gsap.fromTo(stage, {y:-5}, {y:0, duration:.5, ease:"elastic.out(1.2,.32)"});
+         threadBurst();
+         gsap.fromTo(orderBtn, {scale:1}, {scale:1.12, duration:.18, yoyo:true, repeat:1, ease:"power2.inOut"});
+       }});
+    gsap.to([measure, chalk], {opacity:0, duration:.4});
+  }
+  function threadBurst(){
+    var colors = ["#E03A2F", "#F2C53D", "#F4EFE4"];
+    for (var i = 0; i < 26; i++){
+      var b = document.createElement("i");
+      b.className = "fit__bit";
+      b.style.background = colors[i % 3];
+      burst.appendChild(b);
+      gsap.fromTo(b,
+        {x:0, y:0, rotation:gsap.utils.random(0,360), opacity:1},
+        {x:gsap.utils.random(-170,170), y:gsap.utils.random(-150,60) + 160,
+         rotation:"+=" + gsap.utils.random(-260,260), opacity:0,
+         duration:gsap.utils.random(.8,1.4), ease:"power2.out",
+         onComplete:function(el){ el.remove(); }, onCompleteParams:[b]});
+    }
+  }
+  function uncomplete(){
+    if (!done) return;
+    done = false;
+    stage.classList.remove("done");
+    ampMul.v = 1;
+    gsap.to(stamp, {scale:0, opacity:0, duration:.18, ease:"power2.in", xPercent:-50, yPercent:-50});
+  }
+
+  /* ----- the full theatrical sequence ----- */
+  function killSeq(){ if (seq){ seq.kill(); seq = null; } }
+  function runSequence(){
+    killSeq(); uncomplete();
+    if (reduced){ state.p = 1; complete(); return; }
+    var it = items[current], cnt = {v:0};
+    state.p = 0; lastP = 0;
+    gsap.set([measure, chalk], {opacity:0});
+    gsap.set(chalkRect, {strokeDashoffset:100});
+    gsap.set(".fit__corner", {scale:0, transformOrigin:"center"});
+    gsap.set(dimW, {scaleX:0});
+    gsap.set(dimH, {scaleY:0});
+    seq = gsap.timeline()
+      /* 01 measure */
+      .call(function(){ setStep(0); })
+      .to(measure, {opacity:1, duration:.2})
+      .to(".fit__corner", {scale:1, duration:.35, stagger:.07, ease:"back.out(2.5)"}, "<")
+      .to(dimW, {scaleX:1, duration:.5, ease:"power3.inOut"}, "-=.1")
+      .to(dimH, {scaleY:1, duration:.5, ease:"power3.inOut"}, "-=.35")
+      .to(cnt, {v:1, duration:.7, ease:"power1.out", onUpdate:function(){
+          dimWLbl.textContent = "W " + Math.round(it.w * cnt.v) + " MM";
+          dimHLbl.textContent = "H " + Math.round(it.h * cnt.v) + " MM";
+        }}, "-=.5")
+      /* 02 chalk */
+      .call(function(){ setStep(1); }, null, "+=.15")
+      .to(chalk, {opacity:1, duration:.2}, "<")
+      .to(chalkRect, {strokeDashoffset:0, duration:.8, ease:"power2.inOut"}, "<")
+      /* 03 stitch + drape */
+      .call(function(){ setStep(2); }, null, "+=.1")
+      .to(state, {p:1, duration:2.1, ease:"power3.inOut", onUpdate:function(){
+          vel = state.p - lastP; lastP = state.p;
+        }}, "<")
+      .call(complete, null, "-=.05");
+  }
+
+  /* ----- item switching with tape wipe ----- */
+  function setItem(i, andRun){
+    if (i === current && andRun === false) return;
+    killSeq(); uncomplete();
+    current = i;
+    tabs.forEach(function(t, j){ t.classList.toggle("active", j === i); });
+    orderBtn.setAttribute("data-order", items[i].order);
+    if (reduced){
+      img.src = items[i].img; img.alt = items[i].alt;
+      state.p = 1; complete(); draw();
+      return;
+    }
+    gsap.timeline()
+      .set(wipe, {transformOrigin:"left"})
+      .to(wipe, {scaleX:1, duration:.32, ease:"power3.inOut"})
+      .call(function(){
+        img.src = items[i].img; img.alt = items[i].alt;
+        state.p = 0; lastP = 0; setStep(-1);
+        gsap.set([measure, chalk], {opacity:0});
+      })
+      .set(wipe, {transformOrigin:"right"})
+      .to(wipe, {scaleX:0, duration:.32, ease:"power3.inOut", delay:.05})
+      .call(function(){ if (andRun !== false) runSequence(); });
+  }
+  tabs.forEach(function(t, i){ t.addEventListener("click", function(){ setItem(i, true); }); });
+  autoBtn.addEventListener("click", runSequence);
+
+  /* ----- manual drag ----- */
+  var dragging = false;
+  stage.addEventListener("pointerdown", function(e){
+    dragging = true; killSeq(); uncomplete(); setStep(3);
+    gsap.to([measure, chalk], {opacity:0, duration:.2});
+    stage.setPointerCapture(e.pointerId);
+    move(e);
+  });
+  stage.addEventListener("pointermove", function(e){ if (dragging) move(e); });
+  stage.addEventListener("pointerup", function(){
+    dragging = false;
+    if (state.p > .93 && !reduced){
+      seq = gsap.timeline()
+        .to(state, {p:1, duration:.25, ease:"power2.out", onUpdate:function(){
+            vel = state.p - lastP; lastP = state.p;
+          }})
+        .call(complete);
+    } else if (state.p > .93){ state.p = 1; complete(); }
+  });
+  function move(e){
+    var r = stage.getBoundingClientRect();
+    var p = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+    vel = vel * .55 + (p - state.p) * .45;
+    state.p = p; lastP = p;
+  }
+
+  /* ----- 3D tilt parallax ----- */
+  if (finePointer && !reduced){
+    var rx = gsap.quickTo(stage, "rotationY", {duration:.6, ease:"power3"}),
+        ry = gsap.quickTo(stage, "rotationX", {duration:.6, ease:"power3"});
+    stage.parentElement.addEventListener("mousemove", function(e){
+      if (dragging) return;
+      var r = stage.getBoundingClientRect();
+      rx(((e.clientX - r.left) / r.width - .5) * 7);
+      ry(-((e.clientY - r.top) / r.height - .5) * 5);
+    });
+    stage.parentElement.addEventListener("mouseleave", function(){ rx(0); ry(0); });
+  }
+
+  /* ----- lifecycle ----- */
+  sizes();
+  if (reduced){
+    state.p = 1; complete(); draw();
+  } else {
+    gsap.ticker.add(tick);
+    new IntersectionObserver(function(en){
+      visible = en[0].isIntersecting;
+      if (visible && !played){ played = true; sizes(); setTimeout(runSequence, 450); }
+    }, {threshold:.35}).observe(stage);
+  }
+})();
+
+/* ============ work gallery: reveal + lightbox ============ */
+(function gallery(){
+  var items = gsap.utils.toArray("#workGrid .work__item");
+  if (!items.length) return;
+  if (!reduced){
+    gsap.fromTo(items, {opacity:0, y:40}, {
+      opacity:1, y:0, duration:.8, ease:"power3.out", stagger:.05,
+      scrollTrigger:{trigger:"#workGrid", start:"top 85%"}
+    });
+  }
+  var box = document.getElementById("lightbox"),
+      img = document.getElementById("lightboxImg"),
+      cap = document.getElementById("lightboxCap"),
+      current = 0;
+  function show(i){
+    current = (i + items.length) % items.length;
+    var src = items[current].querySelector("img"),
+        fig = items[current].querySelector("figcaption");
+    img.src = src.src; img.alt = src.alt;
+    cap.textContent = (current + 1) + " / " + items.length + " — " + (fig ? fig.textContent : "");
+  }
+  function open(i){ show(i); box.classList.add("open"); document.body.style.overflow = "hidden"; }
+  function close(){ box.classList.remove("open"); document.body.style.overflow = ""; }
+  items.forEach(function(it, i){ it.addEventListener("click", function(){ open(i); }); });
+  document.getElementById("lightboxClose").addEventListener("click", close);
+  document.getElementById("lightboxPrev").addEventListener("click", function(){ show(current - 1); });
+  document.getElementById("lightboxNext").addEventListener("click", function(){ show(current + 1); });
+  box.addEventListener("click", function(e){ if (e.target === box) close(); });
+  document.addEventListener("keydown", function(e){
+    if (!box.classList.contains("open")) return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowLeft") show(current - 1);
+    if (e.key === "ArrowRight") show(current + 1);
+  });
+})();
+
+/* ============ order slip ============ */
+(function order(){
+  var form = document.getElementById("orderForm");
+  if (!form) return;
+  var fields = {
+    item: document.getElementById("ordItem"),
+    material: document.getElementById("ordMaterial"),
+    size: document.getElementById("ordSize"),
+    qty: document.getElementById("ordQty"),
+    name: document.getElementById("ordName"),
+    notes: document.getElementById("ordNotes")
+  };
+  var ticket = {
+    item: document.getElementById("tickItem"),
+    material: document.getElementById("tickMaterial"),
+    size: document.getElementById("tickSize"),
+    qty: document.getElementById("tickQty"),
+    name: document.getElementById("tickName"),
+    notes: document.getElementById("tickNotes")
+  };
+  function sync(){
+    Object.keys(fields).forEach(function(k){
+      ticket[k].textContent = fields[k].value.trim();
+    });
+  }
+  Object.keys(fields).forEach(function(k){
+    fields[k].addEventListener("input", sync);
+    fields[k].addEventListener("change", sync);
+  });
+  sync();
+
+  document.getElementById("orderSend").addEventListener("click", function(){
+    var v = function(k){ return fields[k].value.trim(); };
+    var lines = [
+      "NEW ORDER — Lal Babu Cover Maker",
+      "Item: " + v("item"),
+      "Material: " + v("material"),
+      "Size: " + (v("size") || "to be measured"),
+      "Quantity: " + (v("qty") || "1")
+    ];
+    if (v("name")) lines.push("Name: " + v("name"));
+    if (v("notes")) lines.push("Notes: " + v("notes"));
+    lines.push("(Photos of the piece coming in the next message.)");
+    window.open("https://wa.me/919819827871?text=" + encodeURIComponent(lines.join("\n")), "_blank", "noopener");
+  });
+
+  /* "Order this" buttons on cover cards preselect the item */
+  document.querySelectorAll(".cover-card__order").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var want = btn.getAttribute("data-order");
+      Array.prototype.some.call(fields.item.options, function(opt){
+        if (opt.text === want){ fields.item.value = opt.value || opt.text; return true; }
+        return false;
+      });
+      sync();
+      document.getElementById("order").scrollIntoView({behavior: reduced ? "auto" : "smooth"});
+    });
+  });
+})();
+
+/* ============ footer big text scrub ============ */
+if (!reduced){
+  gsap.fromTo(".footer__big", {y:80, opacity:.2}, {y:0, opacity:1, ease:"none",
+    scrollTrigger:{trigger:".footer", start:"top 95%", end:"top 55%", scrub:.5}});
+}
+})();
+</script>
+</body>
+</html>
